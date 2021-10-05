@@ -27,18 +27,15 @@ export const updateGroup = async (
   vkId: number,
   groupUid: mongoose.Types.ObjectId,
   subGroupUid: mongoose.Types.ObjectId,
-): Promise<mongoose.UpdateWriteOpResult> => {
-  const res = await User.updateOne({ vkId }, { $set: { group: groupUid, subGroup: subGroupUid } });
-  console.log('updateOne: ', res);
-  return res;
+): Promise<void> => {
+  await User.updateOne({ vkId }, { $set: { group: groupUid, subGroup: subGroupUid } });
 };
 
 export const updateSubGroup = async (
   vkId: number,
   subGroupUid: mongoose.Types.ObjectId,
-): Promise<mongoose.UpdateWriteOpResult> => {
-  const res = await User.updateOne({ vkId }, { $set: { subGroup: subGroupUid } });
-  return res;
+): Promise<void> => {
+  await User.updateOne({ vkId }, { $set: { subGroup: subGroupUid } });
 };
 
 export const remove = async (vkId: number): Promise<void> => {
