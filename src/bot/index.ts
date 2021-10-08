@@ -8,7 +8,7 @@ import * as utils from '../utils';
 import { IUser, UserRole } from '../models/User';
 import { IGroup } from '../models/Group';
 import { ISubGroup } from '../models/SubGroup';
-import config from '../../config';
+import config from '../config';
 
 enum Commands {
   SET_USER = 'SET_USER',
@@ -20,8 +20,8 @@ enum Commands {
 }
 
 const vk = new VK({
-  token: config.VK_API_TOKEN,
-  apiLimit: config.VK_API_LIMIT,
+  token: config.vk.api.token,
+  apiLimit: config.vk.api.limit,
 });
 
 const hearManager = new HearManager<MessageContext>();
