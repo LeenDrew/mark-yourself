@@ -29,23 +29,23 @@ class ConfigService {
     this.config = {
       vk: {
         api: {
-          token: this.getEnvironment('VK_API_TOKEN'),
-          limit: Number.parseInt(this.getEnvironment('VK_API_LIMIT')),
-          callbackResponse: this.getEnvironment('VK_API_CALLBACK_RESPONSE'),
+          token: this.getEnvironmentValueByKey('VK_API_TOKEN'),
+          limit: Number.parseInt(this.getEnvironmentValueByKey('VK_API_LIMIT')),
+          callbackResponse: this.getEnvironmentValueByKey('VK_API_CALLBACK_RESPONSE'),
         },
         group: {
-          id: Number.parseInt(this.getEnvironment('VK_GROUP_ID')),
+          id: Number.parseInt(this.getEnvironmentValueByKey('VK_GROUP_ID')),
         },
       },
       mongo: {
-        password: this.getEnvironment('MONGO_PASSWORD'),
-        login: this.getEnvironment('MONGO_LOGIN'),
-        uri: this.getEnvironment('MONGO_URI'),
+        password: this.getEnvironmentValueByKey('MONGO_PASSWORD'),
+        login: this.getEnvironmentValueByKey('MONGO_LOGIN'),
+        uri: this.getEnvironmentValueByKey('MONGO_URI'),
       },
     };
   }
 
-  public getEnvironment(key: string): string {
+  private getEnvironmentValueByKey(key: string): string {
     const value = process.env[key];
     if (!value) {
       throw new Error('Invalid environment');
