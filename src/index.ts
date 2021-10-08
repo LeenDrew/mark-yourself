@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import vk from './bot';
+import logger from './common/logger';
 import config from './config';
 
 (async () => {
@@ -9,7 +10,15 @@ import config from './config';
       useUnifiedTopology: true,
     } as mongoose.ConnectOptions);
     await vk.updates.start();
-  } catch (e) {
-    console.error(`mongo connect ERROR: ${e as string}`);
+    logger.log({
+      level: 'info',
+      message: `Bot was successfully started`,
+    });
+  } catch (e: unknown) {
+    logger.log({
+      level: 'error',
+      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+      message: `mongo connect ERROR: ${e}`,
+    });
   }
 })();

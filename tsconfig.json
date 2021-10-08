@@ -16,6 +16,6 @@
     "forceConsistentCasingInFileNames": true,
     "outDir": "./build"
   },
-  "include": ["src/**/*.ts", "src/config"],
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]
 }

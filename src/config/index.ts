@@ -1,6 +1,7 @@
 /* eslint-disable class-methods-use-this */
 /* eslint-disable radix */
 import * as dotenv from 'dotenv';
+import logger from '../common/logger';
 
 dotenv.config();
 
@@ -48,8 +49,13 @@ class ConfigService {
   private getEnvironmentValueByKey(key: string): string {
     const value = process.env[key];
     if (!value) {
+      logger.log({
+        level: 'error',
+        message: 'Invalid environment',
+      });
       throw new Error('Invalid environment');
     }
+
     return value;
   }
 
