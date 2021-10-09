@@ -5,7 +5,7 @@ enum SearchType {
   PERSON = 'person',
 }
 
-interface ISearchData {
+interface SearchData {
   id: number;
   label: string;
   type: SearchType;
@@ -31,8 +31,8 @@ interface ISheduleData {
   stream: string; // Название потока для лекций. Поток(ИСТ-191, ИСТ-192, ПИ-191, ПИ-192)
 }
 
-export const searchByGroup = async (group: string): Promise<AxiosResponse<ISearchData[]>> => {
-  const res = await axios.get<ISearchData[]>('https://rasp.omgtu.ru/api/search', {
+export const searchByGroup = async (group: string): Promise<AxiosResponse<SearchData[]>> => {
+  const res = await axios.get<SearchData[]>('https://rasp.omgtu.ru/api/search', {
     params: { term: group, type: SearchType.GROUP },
   });
   return res;

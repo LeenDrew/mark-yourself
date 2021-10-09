@@ -1,14 +1,14 @@
-import Group, { IGroup } from '../models/Group';
+import GroupModel, { Group } from '../models/Group';
 
 export class GroupController {
-  async create(group: IGroup): Promise<IGroup> {
-    const newGroup = new Group({ ...group });
+  async create(group: Group): Promise<Group> {
+    const newGroup = new GroupModel({ ...group });
     const res = await newGroup.save();
     return res;
   }
 
-  async getById(groupId: number): Promise<IGroup | null> {
-    const group = await Group.findOne({ groupId }).populate('subGroups');
+  async getById(groupId: number): Promise<Group | null> {
+    const group = await GroupModel.findOne({ groupId }).populate('subGroups');
     return group;
   }
 }

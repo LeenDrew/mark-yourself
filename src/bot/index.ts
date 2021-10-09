@@ -5,9 +5,9 @@ import { GroupController } from '../controllers/group.controller';
 import { SubGroupController } from '../controllers/sub-group.controller';
 import * as universityFetch from '../helpers/univ.api';
 import * as utils from '../utils';
-import { IUser, UserRole } from '../models/User';
-import { IGroup } from '../models/Group';
-import { ISubGroup } from '../models/SubGroup';
+import { User, UserRole } from '../models/User';
+import { Group } from '../models/Group';
+import { SubGroup } from '../models/SubGroup';
 import { config } from '../config';
 
 enum Commands {
@@ -273,13 +273,13 @@ ${JSON.stringify(user, null, '  ')}\n/help в помощь`,
     return;
   }
 
-  const subGroups: ISubGroup[] = [
+  const subGroups: SubGroup[] = [
     { subGroupId: 1354, subGroupName: 'ИСТ-191/1' },
     { subGroupId: 1355, subGroupName: 'ИСТ-191/2' },
   ];
   const createdSubGroups = await subGroupController.createMany(subGroups);
 
-  const group: IGroup = {
+  const group: Group = {
     groupId: 452,
     groupName: 'ИСТ-191',
     subGroups: createdSubGroups,
@@ -289,7 +289,7 @@ ${JSON.stringify(user, null, '  ')}\n/help в помощь`,
   const [vkUser] = await vk.api.users.get({
     user_ids: context.senderId.toString(),
   });
-  const candidate: IUser = {
+  const candidate: User = {
     userName: vkUser.first_name,
     userSurname: vkUser.last_name,
     vkId: context.senderId,
@@ -341,7 +341,7 @@ vk.updates.on('message_event', async (context) => {
         const [vkUser] = await vk.api.users.get({
           user_ids: context.userId.toString(),
         });
-        const candidate: IUser = {
+        const candidate: User = {
           userName: vkUser.first_name,
           userSurname: vkUser.last_name,
           vkId: context.userId,
