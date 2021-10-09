@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-import vk from './bot';
-import config from '../config';
+import { vk } from './bot';
+import { config } from './config';
 
 (async () => {
   try {
@@ -8,7 +8,7 @@ import config from '../config';
       useNewUrlParser: true,
       useUnifiedTopology: true,
     } as mongoose.ConnectOptions);
-    await vk.updates
+    vk.updates
       .start()
       .then(() => console.log('Bot was started'))
       .catch(console.error);
