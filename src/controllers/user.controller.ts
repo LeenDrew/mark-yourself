@@ -1,8 +1,8 @@
 import * as mongoose from 'mongoose';
 import User, { IUser, UserRole } from '../models/User';
 
-class UserController {
-  async create(candidate: IUser): Promise<IUser | null> {
+export class UserController {
+  async create(candidate: IUser): Promise<IUser> {
     const user = new User({ ...candidate });
     const res = await user.save();
     return res;
@@ -50,5 +50,3 @@ class UserController {
     await User.deleteOne({ vkId });
   }
 }
-
-export default new UserController();

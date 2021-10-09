@@ -1,7 +1,7 @@
 import Group, { IGroup } from '../models/Group';
 
-class GroupController {
-  async create(group: IGroup): Promise<IGroup | null> {
+export class GroupController {
+  async create(group: IGroup): Promise<IGroup> {
     const newGroup = new Group({ ...group });
     const res = await newGroup.save();
     return res;
@@ -12,5 +12,3 @@ class GroupController {
     return group;
   }
 }
-
-export default new GroupController();
