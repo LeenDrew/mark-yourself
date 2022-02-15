@@ -1,19 +1,11 @@
 import SubGroupModel, { SubGroup } from '../models/SubGroup';
 
 export class SubGroupController {
-  createMany = async (subgroups: SubGroup[]): Promise<SubGroup[]> => {
-    const res = await SubGroupModel.insertMany(subgroups);
-    return res;
-  };
+  createMany = async (subgroups: SubGroup[]): Promise<SubGroup[]> =>
+    SubGroupModel.insertMany(subgroups);
 
-  createOne = async (subgroup: SubGroup): Promise<SubGroup> => {
-    const res = await SubGroupModel.insertMany(subgroup);
-    return res;
-  };
+  createOne = async (subgroup: SubGroup): Promise<SubGroup> => SubGroupModel.insertMany(subgroup);
 
-  getManyByGroupName = async (groupName: string): Promise<SubGroup[]> => {
-    const groupNameRegExp = RegExp(`^${groupName}`, 'i');
-    const subGroups = await SubGroupModel.find({ subGroupName: groupNameRegExp });
-    return subGroups;
-  };
+  getManyByGroupName = async (groupName: string): Promise<SubGroup[]> =>
+    SubGroupModel.find({ subGroupName: RegExp(`^${groupName}`, 'i') });
 }
