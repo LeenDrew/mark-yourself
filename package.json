@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon src/index.ts",
     "start": "ts-node src/index.ts",
-    "build": "tsc"
+    "build": "yarn lint && tsc --noEmit -p .",
+    "lint": "prettier --write \"src/**/*.ts\" && eslint --fix --quiet \"src/**/*.ts\""
   },
   "keywords": [],
   "author": "",
