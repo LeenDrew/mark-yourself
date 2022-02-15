@@ -12,12 +12,12 @@ enum Env {
   MONGO_URI = 'MONGO_URI',
 }
 
-const checkEnv = (envName: string) => {
+const checkEnv = (envName: string): string => {
   const envValue = process.env[envName];
   if (!envValue) {
     throw new Error(`Check that '${envName}' really exist in your .env file`);
   }
-  return String(envValue);
+  return envValue;
 };
 
 const initConfig = () => ({
