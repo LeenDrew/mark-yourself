@@ -11,7 +11,7 @@ interface SearchData {
   type: SearchType;
 }
 
-interface ISheduleData {
+interface SheduleData {
   beginLesson: string; // Время начала ЧЧ:ММ
   endLesson: string; // Время конца ЧЧ:ММ
   date: string; // ГГГГ.ММ.ДД
@@ -42,11 +42,14 @@ export const getSheduleByGroupId = async (
   groupId: number,
   startDay: string,
   finishDay: string,
-): Promise<AxiosResponse<ISheduleData[]>> => {
-  const res = await axios.get<ISheduleData[]>(
+): Promise<AxiosResponse<SheduleData[]>> => {
+  const res = await axios.get<SheduleData[]>(
     `https://rasp.omgtu.ru/api/schedule/group/${groupId}`,
     {
-      params: { start: startDay, finish: finishDay },
+      params: {
+        start: startDay,
+        finish: finishDay,
+      },
     },
   );
   return res;

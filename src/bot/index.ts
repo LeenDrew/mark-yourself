@@ -2,7 +2,7 @@ import { VK, Keyboard, MessageContext, ButtonColor } from 'vk-io';
 import { HearManager } from '@vk-io/hear';
 import { UserController } from '../controllers/user.controller';
 import { GroupController } from '../controllers/group.controller';
-import { SubGroupController } from '../controllers/sub-group.controller';
+import { SubGroupController } from '../controllers/subgroup.controller';
 import * as universityFetch from '../helpers/univ.api';
 import * as utils from '../utils';
 import { User, UserRole } from '../models/User';
@@ -11,12 +11,11 @@ import { SubGroup } from '../models/SubGroup';
 import { config } from '../config';
 
 enum Commands {
-  SET_USER = 'SET_USER',
+  ADD_USER = 'ADD_USER',
   CHANGE_GROUP = 'CHANGE_GROUP',
   CHANGE_SUBGROUP = 'CHANGE_SUBGROUP',
   MARK = 'MARK',
   TEST_MARK = 'TEST_MARK',
-  COMMAND_TEST = 'COMMAND_TEST',
 }
 
 export const vk = new VK({
@@ -36,16 +35,17 @@ hearManager.hear(/^\/help$/i, async (context) => {
 
   await context.send({
     message: `Список доступных команд:
-/start - запуск стартовой цепочки
-/change_group ГРУППА - изменить группу
-/change_subgroup - изменить группу
-/delete - удалить себя из базы
-/me - показать что о тебе записано в бд
-/help - отобразить текущую подсказку
-/test
-/test_search ГРУППА - тест поиска группы
-/test_user - тестовый ТЫ
-/test_mark - тест callback кнопки`,
+    /start - запуск стартовой цепочки
+    /change_group ГРУППА - изменить группу
+    /change_subgroup - изменить подгруппу
+    /delete - удалить себя из базы
+    /me - показать что о тебе записано в бд
+
+    /help - отобразить текущую подсказку
+    /test_user - тестовый ТЫ
+    /test_search ГРУППА - тест поиска группы
+    /test_search_subgroup ГРУППА - тест поиска подгрупп для группы
+    /test_mark - тест callback кнопки`,
   });
 });
 
@@ -59,21 +59,21 @@ hearManager.hear(/^\/start$/i, async (context) => {
   if (isExist) {
     await context.send({
       message: `Ты уже в базе 🙃
-Для просмотра списка команд введи /help
-или жди сообщения от меня с информацией о паре.`,
+    Для просмотра списка команд введи /help
+    или жди сообщения от меня с информацией о паре.`,
     });
     return;
   }
 
   await context.send({
     message: `Спасибо, что думаешь о своем старосте, надеюсь мы подружимся 😊
-Пару слов про меня меня.
-Я буду каждую пару по твоему расписанию отправлять сообщение.
-Для того, чтобы отметиться - просто нажми на кнопку у сообщения ☺
-У тебя будет ровно ДЕНЬ (до 23:59:59), чтобы отметиться, имей это в виду!
-Теперь давай определим твою группу. Для этого введи
-/set_group ГРУППА (регистр не имеет значения)
-Например /set_group ист-191`,
+    Пару слов про меня меня.
+    Я буду каждую пару по твоему расписанию отправлять сообщение.
+    Для того, чтобы отметиться - просто нажми на кнопку у сообщения ☺
+    У тебя будет ровно ДЕНЬ (до 23:59:59), чтобы отметиться, имей это в виду!
+    Теперь давай определим твою группу. Для этого введи
+    /set_group ГРУППА (регистр не имеет значения)
+    Например /set_group ист-191`,
   });
 });
 
@@ -82,7 +82,7 @@ hearManager.hear(/^\/set_group (.+)$/i, async (context) => {
   if (user) {
     await context.send({
       message: `Ты уже в базе, чтобы сменить группу введи
-/change_group ГРУППА (регистр не имеет значения)`,
+      /change_group ГРУППА (регистр не имеет значения)`,
     });
     return;
   }
@@ -126,7 +126,7 @@ hearManager.hear(/^\/set_group (.+)$/i, async (context) => {
       label: el.subGroupName,
       color: ButtonColor.PRIMARY,
       payload: {
-        command: Commands.SET_USER,
+        command: Commands.ADD_USER,
         groupUid: groupModel?._id,
         subGroupUid: el._id,
       },
@@ -136,7 +136,7 @@ hearManager.hear(/^\/set_group (.+)$/i, async (context) => {
 
   await context.send({
     message: `Твоя группа: ${groupModel.groupName}.
-Теперь выбери подгруппу`,
+    Теперь выбери подгруппу`,
     keyboard,
   });
 });
@@ -244,7 +244,7 @@ hearManager.hear(/^\/delete$/i, async (context) => {
   await userController.remove(context.senderId);
   await context.send({
     message: `Вы удалены из базы 😔\nНадеюсь, вы просто тестируете эту команду 😥
-Чтобы начать сначала, введите /start`,
+    Чтобы начать сначала, введите /start`,
   });
 });
 
@@ -268,7 +268,7 @@ hearManager.hear(/^\/test_user$/i, async (context) => {
   if (user) {
     await context.send({
       message: `Вот же ты в базе, дурик, что ты хочешь сделать?
-${JSON.stringify(user, null, '  ')}\n/help в помощь`,
+      ${JSON.stringify(user, null, '  ')}\n/help в помощь`,
     });
     return;
   }
@@ -325,16 +325,54 @@ hearManager.hear(/^\/test_mark$/i, async (context) => {
   await context.send({ message: `Что-то пошло не так, попробуй еще раз` });
 });
 
-hearManager.hear(/^\/test_search_subgroups$/i, async (context) => {
-  const res = await utils.getSubGroups(452, 'ИСТ-191');
-  await context.send({ message: JSON.stringify(res, null, '  ') });
+hearManager.hear(/^\/test_search_group (.+)$/i, async (context) => {
+  const [, inputGroup] = context.$match;
+  const groupNameRegExp = RegExp(`^${inputGroup}$`, 'i');
+  const searchResponse = await universityFetch.searchByGroup(inputGroup);
+  const filteredResponse = searchResponse.data.filter((el) => groupNameRegExp.test(el.label));
+
+  if (!filteredResponse.length) {
+    await context.send({ message: `Ответ неоднозначный, попробуй еще раз` });
+    return;
+  }
+
+  const [group] = filteredResponse;
+  // const res = await utils.getSubGroups(452, 'ИСТ-191');
+  await context.send({ message: JSON.stringify(group, null, '  ') });
+});
+
+hearManager.hear(/^\/test_search_subgroup (.+)$/i, async (context) => {
+  const [, inputGroup] = context.$match;
+  const groupNameRegExp = RegExp(`^${inputGroup}$`, 'i');
+  const searchResponse = await universityFetch.searchByGroup(inputGroup);
+  const filteredResponse = searchResponse.data.filter((el) => groupNameRegExp.test(el.label));
+
+  if (!filteredResponse.length) {
+    await context.send({ message: `Ответ неоднозначный, попробуй еще раз` });
+    return;
+  }
+
+  const [group] = filteredResponse;
+
+  const subGroups = await utils.getSubGroups(group.id, group.label);
+  if (!subGroups) {
+    await context.send({
+      message: `Что-то пошло не так, отправь команду еще раз`,
+    });
+    return;
+  }
+
+  await context.send({
+    message: `Список подгрупп для группы ${inputGroup}:
+    ${JSON.stringify(subGroups, null, ' ')}`,
+  });
 });
 
 vk.updates.on('message_event', async (context) => {
   console.log('message event: ', context);
 
   switch (context.eventPayload.command) {
-    case Commands.SET_USER:
+    case Commands.ADD_USER:
       {
         const { groupUid, subGroupUid } = context.eventPayload;
 
@@ -378,13 +416,13 @@ vk.updates.on('message_event', async (context) => {
 
         await vk.api.messages.send({
           message: `Отлично, ты успешно внесен в базу 🙂
-Чтобы посмотреть, как ты записан в бд, введи /me
-Теперь взгяни, как будет выглядеть пример сообщения,
-чтобы отметить себя, нажми кнопку "Отметиться":
-Предмет: название предмета
-Тип: лекция/лаба/пз
-Начало: время начала пары
-Конец: время конца пары`,
+          Чтобы посмотреть, как ты записан в бд, введи /me
+          Теперь взгяни, как будет выглядеть пример сообщения,
+          чтобы отметить себя, нажми кнопку "Отметиться":
+          Предмет: название предмета
+          Тип: лекция/лаба/пз
+          Начало: время начала пары
+          Конец: время конца пары`,
           peer_id: context.peerId,
           group_id: context.$groupId,
           keyboard,
@@ -413,8 +451,8 @@ vk.updates.on('message_event', async (context) => {
         });
 
         await vk.api.messages.send({
-          message: `Ты успешно сменил группу
-с ${oldSubGroupName as string} на ${newSubGroupName as string}`,
+          message: `Ты успешно сменил группу с ${oldSubGroupName as string} на
+          ${newSubGroupName as string}`,
           peer_id: context.peerId,
           group_id: context.$groupId,
           random_id: Date.now(),
@@ -442,8 +480,8 @@ vk.updates.on('message_event', async (context) => {
         });
 
         await vk.api.messages.send({
-          message: `Ты успешно сменил подгруппу
-с ${oldSubGroupName as string} на ${newSubGroupName as string}`,
+          message: `Ты успешно сменил подгруппу с ${oldSubGroupName as string} на
+          ${newSubGroupName as string}`,
           peer_id: context.peerId,
           group_id: context.$groupId,
           random_id: Date.now(),
