@@ -5,13 +5,13 @@ enum SearchType {
   PERSON = 'person',
 }
 
-interface ISearchData {
+interface SearchData {
   id: number;
   label: string;
   type: SearchType;
 }
 
-interface ISheduleData {
+interface SheduleData {
   beginLesson: string; // Время начала ЧЧ:ММ
   endLesson: string; // Время конца ЧЧ:ММ
   date: string; // ГГГГ.ММ.ДД
@@ -31,8 +31,8 @@ interface ISheduleData {
   stream: string; // Название потока для лекций. Поток(ИСТ-191, ИСТ-192, ПИ-191, ПИ-192)
 }
 
-export const searchByGroup = async (group: string): Promise<AxiosResponse<ISearchData[]>> => {
-  const res = await axios.get<ISearchData[]>('https://rasp.omgtu.ru/api/search', {
+export const searchByGroup = async (group: string): Promise<AxiosResponse<SearchData[]>> => {
+  const res = await axios.get<SearchData[]>('https://rasp.omgtu.ru/api/search', {
     params: { term: group, type: SearchType.GROUP },
   });
   return res;
@@ -42,11 +42,14 @@ export const getSheduleByGroupId = async (
   groupId: number,
   startDay: string,
   finishDay: string,
-): Promise<AxiosResponse<ISheduleData[]>> => {
-  const res = await axios.get<ISheduleData[]>(
+): Promise<AxiosResponse<SheduleData[]>> => {
+  const res = await axios.get<SheduleData[]>(
     `https://rasp.omgtu.ru/api/schedule/group/${groupId}`,
     {
-      params: { start: startDay, finish: finishDay },
+      params: {
+        start: startDay,
+        finish: finishDay,
+      },
     },
   );
   return res;

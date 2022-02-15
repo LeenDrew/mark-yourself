@@ -1,14 +1,8 @@
 import dayjs from 'dayjs';
 import * as universityFetch from '../helpers/univ.api';
-import { ISubGroup } from '../models/SubGroup';
+import { SubGroup } from '../models/SubGroup';
 
-/**
- * Получение массива подгрупп по группе
- * @param {number} groupId
- * @param {string} groupName
- * @returns {Promise<ISubGroup[]>} subGroups
- */
-export const getSubGroups = async (groupId: number, groupName: string): Promise<ISubGroup[]> => {
+export const getSubGroups = async (groupId: number, groupName: string): Promise<SubGroup[]> => {
   const startDate = dayjs().format('YYYY.MM.DD');
   const endDate = dayjs(startDate).add(1, 'month').format('YYYY.MM.DD');
 
@@ -18,7 +12,7 @@ export const getSubGroups = async (groupId: number, groupName: string): Promise<
     throw new Error('Что-то пошло не так');
   }
 
-  const subGroups: ISubGroup[] = [];
+  const subGroups: SubGroup[] = [];
 
   const groupNameRegExp = RegExp(`^${groupName}`, 'i');
 
