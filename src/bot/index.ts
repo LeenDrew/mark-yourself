@@ -1,70 +1,54 @@
 import { VK, Keyboard, MessageContext, ButtonColor } from 'vk-io';
 import { HearManager } from '@vk-io/hear';
-import * as userController from '../controllers/user-controller';
-import * as groupController from '../controllers/group-controller';
-import * as subGroupController from '../controllers/subGroup-controller';
+import { UserController } from '../controllers/user.controller';
+import { GroupController } from '../controllers/group.controller';
+import { SubGroupController } from '../controllers/subgroup.controller';
 import * as universityFetch from '../helpers/univ.api';
 import * as utils from '../utils';
-import { IUser, UserRole } from '../models/User';
-import { IGroup } from '../models/Group';
-import { ISubGroup } from '../models/SubGroup';
-import config from '../../config';
+import { User, UserRole } from '../models/User';
+import { Group } from '../models/Group';
+import { SubGroup } from '../models/SubGroup';
+import { config } from '../config';
 
 enum Commands {
-  SET_USER = 'SET_USER',
+  ADD_USER = 'ADD_USER',
   CHANGE_GROUP = 'CHANGE_GROUP',
   CHANGE_SUBGROUP = 'CHANGE_SUBGROUP',
   MARK = 'MARK',
   TEST_MARK = 'TEST_MARK',
-  COMMAND_TEST = 'COMMAND_TEST',
 }
 
-const vk = new VK({
+export const vk = new VK({
   token: config.VK_API_TOKEN,
   apiLimit: config.VK_API_LIMIT,
 });
 
+const userController = new UserController();
+const groupController = new GroupController();
+const subGroupController = new SubGroupController();
+
 const hearManager = new HearManager<MessageContext>();
 vk.updates.on('message_new', hearManager.middleware);
 
-// Мидлвеир
-vk.updates.use(async (context, next) => {
-  console.log('мидлвеир: ', context);
-
-  // Коммандер для кнопок
-  // if (!context.isOutbox) {
-  //   const { messagePayload } = context;
-  //   context.state.command =
-  //     messagePayload && messagePayload.command ? messagePayload.command : null;
-  //   return next();
-  // }
-
-  return next();
-});
-
-/**
- * Справка с командами
- */
 hearManager.hear(/^\/help$/i, async (context) => {
   // Чек роли юзера, для старосты доп. команды
+
   await context.send({
     message: `Список доступных команд:
-/start - запуск стартовой цепочки
-/change_group ГРУППА - изменить группу
-/change_subgroup - изменить группу
-/delete - удалить себя из базы
-/me - показать что о тебе записано в бд
-/help - отобразить текущую подсказку
-/test
-/test_search ГРУППА - тест поиска группы
-/test_user - тестовый ТЫ
-/test_mark - тест callback кнопки`,
+    /start - запуск стартовой цепочки
+    /change_group ГРУППА - изменить группу
+    /change_subgroup - изменить подгруппу
+    /delete - удалить себя из базы
+    /me - показать что о тебе записано в бд
+
+    /help - отобразить текущую подсказку
+    /test_user - тестовый ТЫ
+    /test_search ГРУППА - тест поиска группы
+    /test_search_subgroup ГРУППА - тест поиска подгрупп для группы
+    /test_mark - тест callback кнопки`,
   });
 });
 
-/**
- * Стартовое сообщение
- */
 hearManager.hear(/^\/start$/i, async (context) => {
   const [vkUser] = await vk.api.users.get({
     user_ids: context.senderId.toString(),
@@ -75,33 +59,30 @@ hearManager.hear(/^\/start$/i, async (context) => {
   if (isExist) {
     await context.send({
       message: `Ты уже в базе 🙃
-Для просмотра списка команд введи /help
-или жди сообщения от меня с информацией о паре.`,
+    Для просмотра списка команд введи /help
+    или жди сообщения от меня с информацией о паре.`,
     });
     return;
   }
 
   await context.send({
     message: `Спасибо, что думаешь о своем старосте, надеюсь мы подружимся 😊
-Пару слов про меня меня.
-Я буду каждую пару по твоему расписанию отправлять сообщение.
-Для того, чтобы отметиться - просто нажми на кнопку у сообщения ☺
-У тебя будет ровно ДЕНЬ (до 23:59:59), чтобы отметиться, имей это в виду!
-Теперь давай определим твою группу. Для этого введи
-/set_group ГРУППА (регистр не имеет значения)
-Например /set_group ист-191`,
+    Пару слов про меня меня.
+    Я буду каждую пару по твоему расписанию отправлять сообщение.
+    Для того, чтобы отметиться - просто нажми на кнопку у сообщения ☺
+    У тебя будет ровно ДЕНЬ (до 23:59:59), чтобы отметиться, имей это в виду!
+    Теперь давай определим твою группу. Для этого введи
+    /set_group ГРУППА (регистр не имеет значения)
+    Например /set_group ист-191`,
   });
 });
 
-/**
- * Определение группы
- */
 hearManager.hear(/^\/set_group (.+)$/i, async (context) => {
   const user = await userController.getByVkId(context.senderId);
   if (user) {
     await context.send({
       message: `Ты уже в базе, чтобы сменить группу введи
-/change_group ГРУППА (регистр не имеет значения)`,
+      /change_group ГРУППА (регистр не имеет значения)`,
     });
     return;
   }
@@ -130,11 +111,11 @@ hearManager.hear(/^\/set_group (.+)$/i, async (context) => {
       return;
     }
 
-    const subs = await subGroupController.createMany(subGroups);
+    const createdSubGroups = await subGroupController.createMany(subGroups);
     groupModel = {
       groupId: group.id,
       groupName: group.label,
-      subGroups: subs!,
+      subGroups: createdSubGroups,
     };
     groupModel = await groupController.create(groupModel);
   }
@@ -145,7 +126,7 @@ hearManager.hear(/^\/set_group (.+)$/i, async (context) => {
       label: el.subGroupName,
       color: ButtonColor.PRIMARY,
       payload: {
-        command: Commands.SET_USER,
+        command: Commands.ADD_USER,
         groupUid: groupModel?._id,
         subGroupUid: el._id,
       },
@@ -154,15 +135,12 @@ hearManager.hear(/^\/set_group (.+)$/i, async (context) => {
   keyboard.inline();
 
   await context.send({
-    message: `Твоя группа: ${groupModel!.groupName}.
-Теперь выбери подгруппу`,
+    message: `Твоя группа: ${groupModel.groupName}.
+    Теперь выбери подгруппу`,
     keyboard,
   });
 });
 
-/**
- * Смена группы
- */
 hearManager.hear(/^\/change_group (.+)$/i, async (context) => {
   const [, inputGroup] = context.$match;
   const groupNameRegExp = RegExp(`^${inputGroup}$`, 'i');
@@ -194,11 +172,11 @@ hearManager.hear(/^\/change_group (.+)$/i, async (context) => {
       return;
     }
 
-    const subs = await subGroupController.createMany(subGroups);
+    const createdSubGroups = await subGroupController.createMany(subGroups);
     groupModel = {
       groupId: group.id,
       groupName: group.label,
-      subGroups: subs!,
+      subGroups: createdSubGroups,
     };
     groupModel = await groupController.create(groupModel);
   }
@@ -220,14 +198,11 @@ hearManager.hear(/^\/change_group (.+)$/i, async (context) => {
   keyboard.inline();
 
   await context.send({
-    message: `Твоя группа: ${groupModel!.groupName}.\nТеперь выбери подгруппу:`,
+    message: `Твоя группа: ${groupModel.groupName}.\nТеперь выбери подгруппу:`,
     keyboard,
   });
 });
 
-/**
- * Смена подгруппы
- */
 hearManager.hear(/^\/change_subgroup$/i, async (context) => {
   const user = await userController.getByVkId(context.senderId);
   if (!user) {
@@ -235,14 +210,15 @@ hearManager.hear(/^\/change_subgroup$/i, async (context) => {
     return;
   }
 
-  const groupModel = await groupController.getById(user.group.groupId);
+  const group = await groupController.getById(user.group.groupId);
 
-  if (groupModel && groupModel.subGroups.length < 1) {
+  if (group && group.subGroups.length < 1) {
     await context.send({ message: `У вас только одна подгруппа` });
+    return;
   }
 
   const keyboard = Keyboard.builder();
-  groupModel?.subGroups.forEach((el) => {
+  group?.subGroups.forEach((el) => {
     if (el.subGroupId !== user.subGroup.subGroupId) {
       keyboard.callbackButton({
         label: el.subGroupName,
@@ -250,7 +226,7 @@ hearManager.hear(/^\/change_subgroup$/i, async (context) => {
         payload: {
           command: Commands.CHANGE_SUBGROUP,
           subGroupUid: el._id,
-          oldSubGroupName: user?.subGroup.subGroupName,
+          oldSubGroupName: user.subGroup.subGroupName,
           newSubGroupName: el.subGroupName,
         },
       });
@@ -264,20 +240,14 @@ hearManager.hear(/^\/change_subgroup$/i, async (context) => {
   });
 });
 
-/**
- * Удаление юзера из бд
- */
 hearManager.hear(/^\/delete$/i, async (context) => {
   await userController.remove(context.senderId);
   await context.send({
     message: `Вы удалены из базы 😔\nНадеюсь, вы просто тестируете эту команду 😥
-Чтобы начать сначала, введите /start`,
+    Чтобы начать сначала, введите /start`,
   });
 });
 
-/**
- * Инфа о юзере
- */
 hearManager.hear(/^\/me$/i, async (context) => {
   const user = await userController.getByVkId(context.senderId);
   if (!user) {
@@ -292,59 +262,48 @@ hearManager.hear(/^\/me$/i, async (context) => {
   });
 });
 
-/**
- * Тест
- */
-// hearManager.hear(/^\/test$/i, async (context) => {});
-
-/**
- * Тест записи юзера в бд
- */
 hearManager.hear(/^\/test_user$/i, async (context) => {
-  const dbUser = await userController.getByVkId(context.senderId);
+  const user = await userController.getByVkId(context.senderId);
 
-  if (dbUser) {
+  if (user) {
     await context.send({
       message: `Вот же ты в базе, дурик, что ты хочешь сделать?
-${JSON.stringify(dbUser, null, '  ')}\n/help в помощь`,
+      ${JSON.stringify(user, null, '  ')}\n/help в помощь`,
     });
     return;
   }
 
-  const subGroups: ISubGroup[] = [
+  const subGroups: SubGroup[] = [
     { subGroupId: 1354, subGroupName: 'ИСТ-191/1' },
     { subGroupId: 1355, subGroupName: 'ИСТ-191/2' },
   ];
-  const subs = await subGroupController.createMany(subGroups);
+  const createdSubGroups = await subGroupController.createMany(subGroups);
 
-  const group: IGroup = {
+  const group: Group = {
     groupId: 452,
     groupName: 'ИСТ-191',
-    subGroups: subs!,
+    subGroups: createdSubGroups,
   };
-  const gr = await groupController.create(group);
+  const createdGroup = await groupController.create(group);
 
   const [vkUser] = await vk.api.users.get({
     user_ids: context.senderId.toString(),
   });
-  const candidate: IUser = {
+  const candidate: User = {
     userName: vkUser.first_name,
     userSurname: vkUser.last_name,
     vkId: context.senderId,
     peerId: context.peerId,
     role: UserRole.MEMBER,
-    group: gr?._id,
-    subGroup: subs?.find((el) => el.subGroupId === 1355)?._id,
+    group: createdGroup._id,
+    subGroup: createdSubGroups.find((el) => el.subGroupId === 1355)?._id,
   };
-  const user = await userController.create(candidate);
+  const createdUser = await userController.create(candidate);
   await context.send({
-    message: `Успешно, вот ты: ${JSON.stringify(user, null, '  ')}`,
+    message: `Успешно, вот ты: ${JSON.stringify(createdUser, null, '  ')}`,
   });
 });
 
-/**
- * Тест редактирования сообщения
- */
 hearManager.hear(/^\/test_mark$/i, async (context) => {
   if (context.conversationMessageId) {
     const replyMessageId = context.conversationMessageId + 1;
@@ -366,33 +325,61 @@ hearManager.hear(/^\/test_mark$/i, async (context) => {
   await context.send({ message: `Что-то пошло не так, попробуй еще раз` });
 });
 
-/**
- * Тест поиска подгрупп по id и названию группы
- */
-hearManager.hear(/^\/test_search_subgroups$/i, async (context) => {
-  const res = await utils.getSubGroups(452, 'ИСТ-191');
-  await context.send({ message: JSON.stringify(res, null, '  ') });
+hearManager.hear(/^\/test_search_group (.+)$/i, async (context) => {
+  const [, inputGroup] = context.$match;
+  const groupNameRegExp = RegExp(`^${inputGroup}$`, 'i');
+  const searchResponse = await universityFetch.searchByGroup(inputGroup);
+  const filteredResponse = searchResponse.data.filter((el) => groupNameRegExp.test(el.label));
+
+  if (!filteredResponse.length) {
+    await context.send({ message: `Ответ неоднозначный, попробуй еще раз` });
+    return;
+  }
+
+  const [group] = filteredResponse;
+  // const res = await utils.getSubGroups(452, 'ИСТ-191');
+  await context.send({ message: JSON.stringify(group, null, '  ') });
 });
 
-// Входящее сообщение юзера
-// vk.updates.on('message_new', async (context) => {});
+hearManager.hear(/^\/test_search_subgroup (.+)$/i, async (context) => {
+  const [, inputGroup] = context.$match;
+  const groupNameRegExp = RegExp(`^${inputGroup}$`, 'i');
+  const searchResponse = await universityFetch.searchByGroup(inputGroup);
+  const filteredResponse = searchResponse.data.filter((el) => groupNameRegExp.test(el.label));
+
+  if (!filteredResponse.length) {
+    await context.send({ message: `Ответ неоднозначный, попробуй еще раз` });
+    return;
+  }
+
+  const [group] = filteredResponse;
+
+  const subGroups = await utils.getSubGroups(group.id, group.label);
+  if (!subGroups) {
+    await context.send({
+      message: `Что-то пошло не так, отправь команду еще раз`,
+    });
+    return;
+  }
+
+  await context.send({
+    message: `Список подгрупп для группы ${inputGroup}:
+    ${JSON.stringify(subGroups, null, ' ')}`,
+  });
+});
 
 vk.updates.on('message_event', async (context) => {
   console.log('message event: ', context);
 
   switch (context.eventPayload.command) {
-    /**
-     * Запись нового юзера в бд
-     */
-    case Commands.SET_USER:
+    case Commands.ADD_USER:
       {
-        // Извлечь _id группы и _id подгруппы
         const { groupUid, subGroupUid } = context.eventPayload;
 
         const [vkUser] = await vk.api.users.get({
           user_ids: context.userId.toString(),
         });
-        const candidate: IUser = {
+        const candidate: User = {
           userName: vkUser.first_name,
           userSurname: vkUser.last_name,
           vkId: context.userId,
@@ -402,10 +389,8 @@ vk.updates.on('message_event', async (context) => {
           subGroup: subGroupUid,
         };
 
-        // Сохранить юзера в бд
         await userController.create(candidate);
 
-        // Получить исходное сообщение и убрать клавиатуру
         const previousMessage = await vk.api.messages.getByConversationMessageId({
           peer_id: context.peerId,
           conversation_message_ids: context.conversationMessageId,
@@ -431,13 +416,13 @@ vk.updates.on('message_event', async (context) => {
 
         await vk.api.messages.send({
           message: `Отлично, ты успешно внесен в базу 🙂
-Чтобы посмотреть, как ты записан в бд, введи /me
-Теперь взгяни, как будет выглядеть пример сообщения,
-чтобы отметить себя, нажми кнопку "Отметиться":
-Предмет: название предмета
-Тип: лекция/лаба/пз
-Начало: время начала пары
-Конец: время конца пары`,
+          Чтобы посмотреть, как ты записан в бд, введи /me
+          Теперь взгяни, как будет выглядеть пример сообщения,
+          чтобы отметить себя, нажми кнопку "Отметиться":
+          Предмет: название предмета
+          Тип: лекция/лаба/пз
+          Начало: время начала пары
+          Конец: время конца пары`,
           peer_id: context.peerId,
           group_id: context.$groupId,
           keyboard,
@@ -446,18 +431,12 @@ vk.updates.on('message_event', async (context) => {
       }
       break;
 
-    /**
-     * Смена группы (uid группы и uid подгруппы)
-     */
     case Commands.CHANGE_GROUP:
       {
-        // Извлечь _id группы и _id подгруппы
         const { oldSubGroupName, newSubGroupName, groupUid, subGroupUid } = context.eventPayload;
 
-        // Обновить группу и подгруппу
         await userController.updateGroup(context.userId, groupUid, subGroupUid);
 
-        // Получить исходное сообщение и убрать клавиатуру
         const previousMessage = await vk.api.messages.getByConversationMessageId({
           peer_id: context.peerId,
           conversation_message_ids: context.conversationMessageId,
@@ -472,8 +451,8 @@ vk.updates.on('message_event', async (context) => {
         });
 
         await vk.api.messages.send({
-          message: `Ты успешно сменил группу
-с ${oldSubGroupName as string} на ${newSubGroupName as string}`,
+          message: `Ты успешно сменил группу с ${oldSubGroupName as string} на
+          ${newSubGroupName as string}`,
           peer_id: context.peerId,
           group_id: context.$groupId,
           random_id: Date.now(),
@@ -481,18 +460,12 @@ vk.updates.on('message_event', async (context) => {
       }
       break;
 
-    /**
-     * Смена подгруппы (uid подгруппы)
-     */
     case Commands.CHANGE_SUBGROUP:
       {
-        // Извлечь _id группы и _id подгруппы
         const { oldSubGroupName, newSubGroupName, subGroupUid } = context.eventPayload;
 
-        // Обновить подгруппу
         await userController.updateSubGroup(context.userId, subGroupUid);
 
-        // Получить исходное сообщение и убрать клавиатуру
         const previousMessage = await vk.api.messages.getByConversationMessageId({
           peer_id: context.peerId,
           conversation_message_ids: context.conversationMessageId,
@@ -507,8 +480,8 @@ vk.updates.on('message_event', async (context) => {
         });
 
         await vk.api.messages.send({
-          message: `Ты успешно сменил подгруппу
-с ${oldSubGroupName as string} на ${newSubGroupName as string}`,
+          message: `Ты успешно сменил подгруппу с ${oldSubGroupName as string} на
+          ${newSubGroupName as string}`,
           peer_id: context.peerId,
           group_id: context.$groupId,
           random_id: Date.now(),
@@ -516,9 +489,6 @@ vk.updates.on('message_event', async (context) => {
       }
       break;
 
-    /**
-     * Тест редактирования сообщения
-     */
     case Commands.TEST_MARK:
       {
         const previousMessage = await vk.api.messages.getByConversationMessageId({
@@ -536,9 +506,6 @@ vk.updates.on('message_event', async (context) => {
       }
       break;
 
-    /**
-     * Отметить юзера на паре
-     */
     case Commands.MARK:
       break;
 
@@ -546,10 +513,3 @@ vk.updates.on('message_event', async (context) => {
       break;
   }
 });
-// Разрешение отправки сообщений
-// vk.updates.on('message_allow', (context) => console.log('message_allow: ', context));
-
-// Вход в группу
-// vk.updates.on('group_join', (context) => console.log('group_join: ', context));
-
-export default vk;

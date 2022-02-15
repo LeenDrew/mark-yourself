@@ -5,7 +5,7 @@ export enum UserRole {
   LEADER = 'leader',
 }
 
-export interface IUser {
+export interface User {
   _id?: mongoose.Types.ObjectId;
   userName: string; // Имя, берется из вк
   userSurname: string; // Фамилия, берется из вк
@@ -16,7 +16,7 @@ export interface IUser {
   subGroup: any; // _id SubGroup Model
 }
 
-const schema = new mongoose.Schema<IUser>({
+const schema = new mongoose.Schema<User>({
   userName: { type: String, required: true },
   userSurname: { type: String, required: true },
   vkId: { type: Number, required: true, unique: true },
@@ -26,4 +26,4 @@ const schema = new mongoose.Schema<IUser>({
   subGroup: { type: mongoose.Schema.Types.ObjectId, ref: 'SubGroup', required: true },
 });
 
-export default mongoose.model<IUser>('User', schema);
+export default mongoose.model<User>('User', schema);
