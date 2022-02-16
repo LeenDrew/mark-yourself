@@ -5,7 +5,22 @@ on:
     branches: [master]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+      
+      - name: 'Yarn install'
+        run: |
+          yarn
+      - name: 'Lint'
+        run: |
+          yarn build
   build:
+    needs: lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
