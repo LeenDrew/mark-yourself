@@ -1,5 +1,6 @@
 import { VK, Keyboard, MessageContext, ButtonColor, ContextDefaultState } from 'vk-io';
 import { HearManager } from '@vk-io/hear';
+import { Logger } from 'winston';
 import { UserController } from '../controllers/user.controller';
 import { GroupController } from '../controllers/group.controller';
 import { SubGroupController } from '../controllers/subgroup.controller';
@@ -23,6 +24,7 @@ export class VKApi {
   private readonly hearManager: HearManager<MessageContext<ContextDefaultState>>;
 
   constructor(
+    private readonly logger: Logger,
     private readonly userController: UserController,
     private readonly groupController: GroupController,
     private readonly subGroupController: SubGroupController,
@@ -36,11 +38,13 @@ export class VKApi {
     this.hearManager = new HearManager<MessageContext>();
   }
 
-  public start(): void{
+  public start(): void {
     this.vk.updates
       .start()
-      .then(() => console.log('Bot was started'))
-      .catch(console.error);
+      .then(() => {
+        this.logger.info('Bot was started');
+      })
+      .catch((err) => this.logger.error(err));
   }
 
   public initializeHandlers(): void {
@@ -124,6 +128,7 @@ export class VKApi {
           await context.send({
             message: `Что-то пошло не так, отправь команду еще раз`,
           });
+          this.logger.error(`subgroub by ${group.id}:${group.label} not found`)
           return;
         }
 
@@ -532,4 +537,3 @@ export class VKApi {
     });
   }
 }
-
