@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { vk } from './bot';
+import { ApplicationModule } from './app.module';
 import { config } from './config';
 
 (() => {
@@ -9,8 +9,7 @@ import { config } from './config';
       useUnifiedTopology: true,
     } as mongoose.ConnectOptions)
     .catch(console.error);
-  vk.updates
-    .start()
-    .then(() => console.log('Bot was started'))
-    .catch(console.error);
+
+    const app = new ApplicationModule();
+    app.start()
 })();
