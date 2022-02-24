@@ -1,21 +1,22 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "module": "commonjs",
+    "outDir": "./build",
+    "strict": false,
+    "target": "ES2019",
+    "lib": [
+      "ES2019"
+    ],
+    "module": "CommonJS",
     "moduleResolution": "node",
-    "noEmit": true,
-    "strict": true,
-    "allowJs": true,
-    "sourceMap": true,
+    "experimentalDecorators": true,
+    "removeComments": true,
     "skipLibCheck": true,
+    "sourceMap": true,
+    "noEmit": false,
+    "allowJs": true,
     "esModuleInterop": true,
-    "isolatedModules": true,
     "resolveJsonModule": true,
     "noFallthroughCasesInSwitch": true,
     "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
-    "outDir": "./build"
-  },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules"]
+  }
 }
