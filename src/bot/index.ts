@@ -121,13 +121,13 @@ hearManager.hear(/^\/set_group (.+)$/i, async (context) => {
   }
 
   const keyboard = Keyboard.builder();
-  groupModel?.subGroups.forEach((el) => {
+  groupModel.subGroups.forEach((el) => {
     keyboard.callbackButton({
       label: el.subGroupName,
       color: ButtonColor.PRIMARY,
       payload: {
         command: Commands.ADD_USER,
-        groupUid: groupModel?._id,
+        groupUid: groupModel._id,
         subGroupUid: el._id,
       },
     });
@@ -156,7 +156,7 @@ hearManager.hear(/^\/change_group (.+)$/i, async (context) => {
   const [group] = filteredResponse;
 
   const user = await userController.getByVkId(context.senderId);
-  if (user?.group.groupId === group.id) {
+  if (user.group.groupId === group.id) {
     await context.send({ message: `Ты ввел свою текущую группу, попробуй /help` });
     return;
   }
@@ -182,15 +182,15 @@ hearManager.hear(/^\/change_group (.+)$/i, async (context) => {
   }
 
   const keyboard = Keyboard.builder();
-  groupModel?.subGroups.forEach((el) => {
+  groupModel.subGroups.forEach((el) => {
     keyboard.callbackButton({
       label: el.subGroupName,
       color: ButtonColor.PRIMARY,
       payload: {
         command: Commands.CHANGE_GROUP,
-        groupUid: groupModel?._id,
+        groupUid: groupModel._id,
         subGroupUid: el._id,
-        oldSubGroupName: user?.subGroup.subGroupName,
+        oldSubGroupName: user.subGroup.subGroupName,
         newSubGroupName: el.subGroupName,
       },
     });
@@ -218,7 +218,7 @@ hearManager.hear(/^\/change_subgroup$/i, async (context) => {
   }
 
   const keyboard = Keyboard.builder();
-  group?.subGroups.forEach((el) => {
+  group.subGroups.forEach((el) => {
     if (el.subGroupId !== user.subGroup.subGroupId) {
       keyboard.callbackButton({
         label: el.subGroupName,
@@ -279,6 +279,7 @@ hearManager.hear(/^\/test_user$/i, async (context) => {
   ];
   const createdSubGroups = await subGroupController.createMany(subGroups);
 
+  // Вместо описывания, создавать прокидывая значения и получать готовый
   const group: Group = {
     groupId: 452,
     groupName: 'ИСТ-191',
@@ -296,7 +297,7 @@ hearManager.hear(/^\/test_user$/i, async (context) => {
     peerId: context.peerId,
     role: UserRole.MEMBER,
     group: createdGroup._id,
-    subGroup: createdSubGroups.find((el) => el.subGroupId === 1355)?._id,
+    subGroup: createdSubGroups.find((el) => el.subGroupId === 1355)._id,
   };
   const createdUser = await userController.create(candidate);
   await context.send({
